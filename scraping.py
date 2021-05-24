@@ -12,6 +12,8 @@ def scrape_all():
     browser = Browser('chrome', **executable_path, headless=True)
 
     news_title, news_paragraph = mars_news(browser)
+    
+    # hemisphere_image_urls = hemisphere(browser)
 
     # Run all scraping functions and store results in a dictionary
     data = {
@@ -19,6 +21,7 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
+        "hemispheres": hemisphere(browser),
         "last_modified": dt.datetime.now()
     }
 
@@ -26,12 +29,13 @@ def scrape_all():
     browser.quit()
     return data
 
-
+# Mars News title and paragraph
 def mars_news(browser):
 
     # Scrape Mars News
     # Visit the mars nasa news site
-    url = 'https://data-class-mars.s3.amazonaws.com/Mars/index.html'
+
+    url = 'https://redplanetscience.com/'
     browser.visit(url)
 
     # Optional delay for loading the page
@@ -57,7 +61,7 @@ def mars_news(browser):
 
 def featured_image(browser):
     # Visit URL
-    url = 'https://data-class-jpl-space.s3.amazonaws.com/JPL_Space/index.html'
+    url = 'https://spaceimages-mars.com'
     browser.visit(url)
 
     # Find and click the full image button
@@ -77,7 +81,7 @@ def featured_image(browser):
         return None
 
     # Use the base url to create an absolute url
-    img_url = f'https://data-class-jpl-space.s3.amazonaws.com/JPL_Space/{img_url_rel}'
+    img_url = f'https://spaceimages-mars.com/{img_url_rel}'
 
     return img_url
 
@@ -85,8 +89,8 @@ def mars_facts():
     # Add try/except for error handling
     try:
         # Use 'read_html' to scrape the facts table into a dataframe
-        df = pd.read_html('https://data-class-mars-facts.s3.amazonaws.com/Mars_Facts/index.html')[0]
-
+        df = pd.read_html('https://galaxyfacts-mars.com')[0]
+        df = df.drop(df.index[0])
     except BaseException:
         return None
 
@@ -95,9 +99,50 @@ def mars_facts():
     df.set_index('Description', inplace=True)
 
     # Convert dataframe into HTML format, add bootstrap
-    return df.to_html(classes="table table-striped")
+    return df.to_html(classes="table table-striped table-hover")
+
+
+# Mars hemispheres extraction
+def hemisphere(browser):
+    # Visit URL
+    url = 'https://marshemispheres.com/'
+    browser.visit(url)
+
+    # parse the html
+    html = browser.html
+    mysoup = soup(html, 'html.parser')
+
+    # create empty list for dictionaries
+    hemisphere_image_urls = []
+
+    # isolate div to scrape
+    elements = mysoup.select('div.item div.description a.product-item')
+
+    for elem in elements:
+        # dictionary to hold data
+        img_dict = {}
+        # image page soup parsing
+        browser.visit(url + elem['href'])
+        second_soup = soup(browser.html, 'html.parser')
+        
+        # image url scraping
+        img_elem = second_soup.select('div.container div#wide-image ul li a')[0]
+        img_dict['img_url'] = url + img_elem['href']
+        
+        # title scraping
+        title_div = second_soup.select('div.container div#wide-image + div.cover > h2.title')[0]
+        img_dict['title'] = title_div.get_text()
+        
+        hemisphere_image_urls.append(img_dict)
+
+    return hemisphere_image_urls
+
 
 if __name__ == "__main__":
 
     # If running as script, print scraped data
     print(scrape_all())
+
+
+
+
