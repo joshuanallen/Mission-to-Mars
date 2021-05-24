@@ -9,3 +9,5 @@ Tools: Bootstrap, CSS, JavaScript, HTML, Python, Jupyter Notebook, MongoDB, Spli
 
 ## Example page
 The rendered html page after scraping should look like the following (Only difference would be for any updates in the content on the data source pages)
+
+![Full Rendering of Mission to Mars webpage](https://github.com/joshuanallen/Mission-to-Mars/blob/8eb49bed8235dd4e437ef6f9226b10d18c1218fe/Mission-to-Mars-fully-rendered.png)
